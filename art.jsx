@@ -74,12 +74,14 @@ function Cat({ size = 80, color = C.peach, accent = C.peachDeep, expression = 's
 
 // Tea plant with growth stages 0..4
 function TeaPlant({ stage = 4, size = 80, variant = 'green' }) {
-  const palette = {
-    green:    { leaf: C.leaf, leafLight: C.sage, flower: null },
-    chamomile:{ leaf: C.sage, leafLight: '#c4d8be', flower: '#fff5c4' },
-    rose:     { leaf: C.leaf, leafLight: C.sage, flower: C.rose },
-    lavender: { leaf: C.sage, leafLight: '#c8d8be', flower: C.lavender },
-  }[variant];
+  const palette = ({
+    green:    { leaf: C.leaf,     leafLight: C.sage,      flower: null },
+    chamomile:{ leaf: C.sage,     leafLight: '#c4d8be',   flower: '#fff5c4' },
+    rose:     { leaf: C.leaf,     leafLight: C.sage,      flower: C.rose },
+    lavender: { leaf: C.sage,     leafLight: '#c8d8be',   flower: C.lavender },
+    matcha:   { leaf: '#4a6b33',  leafLight: '#6b8e4e',   flower: null },
+    hibiscus: { leaf: C.leaf,     leafLight: C.sage,      flower: '#d97570' },
+  })[variant] || { leaf: C.leaf, leafLight: C.sage, flower: null };
 
   if (stage === 0) {
     return (

@@ -16,6 +16,7 @@ function OrdersRail({ orders, activeId, onSelect, tutLockTarget }) {
           order={o}
           active={o.id === activeId}
           spotlight={tutLockTarget === 'order' && i === 0}
+          locked={tutLockTarget === 'order' && i !== 0}
           onClick={() => onSelect(o.id)}
         />
       ))}
@@ -32,19 +33,19 @@ function OrdersRail({ orders, activeId, onSelect, tutLockTarget }) {
   );
 }
 
-function OrderCard({ order, active, onClick, spotlight }) {
+function OrderCard({ order, active, onClick, spotlight, locked }) {
   const tea = TEA_TYPES.find(t => t.id === order.tea);
   const cup = CUPS.find(c => c.id === order.cup);
   return (
     <div
-      className={'order-card' + (active ? ' active' : '') + (order.done ? ' done' : '') + (spotlight ? ' tut-spot' : '')}
+      className={'order-card' + (active ? ' active' : '') + (order.done ? ' done' : '') + (spotlight ? ' tut-spot' : '') + (locked ? ' tut-dim' : '')}
       data-tut="order"
-      onClick={onClick}
+      onClick={locked ? undefined : onClick}
     >
       <div className="order-head">
         <div className="order-num">#{order.num}</div>
         <div className="order-cat">
-          <Cat size={56} color={order.catColor.body} accent={order.catColor.accent} expression="smile"/>
+          <Cat size={70} color={order.catColor.body} accent={order.catColor.accent} expression="smile"/>
         </div>
         <div style={{flex: 1}}>
           <div className="order-name">{order.catName}</div>
@@ -317,7 +318,7 @@ function Bed({ bed, onHarvest, onPlant, onClick, draggingSeed }) {
       {ready && <div className="bed-ready-badge">HARVEST!</div>}
       {!ready && <div className="bed-growing">growing…</div>}
       <div className="bed-plant">
-        <TeaPlant stage={bed.stage} variant={bed.plant} size={100}/>
+        <TeaPlant stage={bed.stage} variant={tea?.plant || bed.plant} size={100}/>
       </div>
       <div className="bed-footer">
         <div className="bed-progress"><div style={{ width: (bed.growth * 100) + '%' }}/></div>

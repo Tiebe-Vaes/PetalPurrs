@@ -104,7 +104,7 @@ button:disabled { cursor: not-allowed; }
   border-radius: 16px;
   background: linear-gradient(135deg, #d8e7d0, var(--sage));
   box-shadow: var(--shadow-soft);
-  min-width: 240px;
+  min-width: 340px;
 }
 .level-chip-badge {
   font-weight: 800; font-size: 14px; color: #2f4a28;
@@ -180,7 +180,7 @@ button:disabled { cursor: not-allowed; }
 .order-card {
   background: var(--card);
   border-radius: var(--r-md);
-  padding: 16px;
+  padding: 20px;
   box-shadow: var(--shadow-soft);
   border: 3px solid transparent;
   transition: all .2s;
@@ -205,12 +205,12 @@ button:disabled { cursor: not-allowed; }
 }
 .order-card.active .order-num { background: var(--peach-deep); color: white; }
 .order-cat {
-  width: 56px; height: 56px; border-radius: 50%;
+  width: 72px; height: 72px; border-radius: 50%;
   background: var(--cream-deep);
   display: grid; place-items: center;
   overflow: hidden; flex-shrink: 0;
 }
-.order-name { font-weight: 700; font-size: 16px; color: var(--cocoa); }
+.order-name { font-weight: 700; font-size: 18px; color: var(--cocoa); }
 .order-tip-row { display: flex; gap: 6px; margin-top: 2px; }
 .order-tip {
   font-size: 11px; font-weight: 700; color: var(--leaf);
@@ -246,13 +246,13 @@ button:disabled { cursor: not-allowed; }
   margin-bottom: 4px;
 }
 .want-art {
-  height: 54px;
+  height: 68px;
   border-radius: 10px;
   background: var(--card);
   display: grid; place-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
-.want-name { font-size: 11px; font-weight: 700; color: var(--cocoa); }
+.want-name { font-size: 12px; font-weight: 700; color: var(--cocoa); }
 
 .want-extras { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(107,79,58,0.15); }
 .want-extras-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
@@ -861,15 +861,15 @@ button:disabled { cursor: not-allowed; }
   position: fixed;
   bottom: 24px; left: 50%;
   transform: translateX(-50%);
-  width: min(720px, 92vw);
-  height: 280px;
+  width: min(820px, 94vw);
+  height: min(50vh, 420px);
   background: linear-gradient(180deg, #fff8ee 0%, #fbeedd 100%);
   border-radius: 28px;
   box-shadow: 0 20px 60px rgba(60,30,15,0.4);
   border: 3px solid var(--peach-deep);
   z-index: 95;
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 0;
   overflow: hidden;
   animation: slideUp .5s cubic-bezier(.34,1.56,.64,1);
@@ -887,7 +887,7 @@ button:disabled { cursor: not-allowed; }
 }
 .tut-mascot-cat {
   display: grid; place-items: center;
-  width: 180px; height: 180px;
+  width: 220px; height: 220px;
 }
 .tut-mascot-cat.wave { animation: tut-wave 2s ease-in-out infinite; }
 .tut-mascot-cat.point { animation: tut-point 1.2s ease-in-out infinite; }
@@ -926,12 +926,12 @@ button:disabled { cursor: not-allowed; }
 }
 .tut-title {
   font-family: 'DM Serif Display', serif;
-  font-size: 28px; color: var(--cocoa);
-  margin: 8px 0 4px;
+  font-size: 34px; color: var(--cocoa);
+  margin: 8px 0 6px;
   line-height: 1.1;
 }
 .tut-body {
-  font-size: 14px; line-height: 1.5;
+  font-size: 16px; line-height: 1.6;
   color: var(--cocoa-soft);
   margin: 0;
 }

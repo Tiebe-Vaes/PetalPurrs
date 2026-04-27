@@ -480,7 +480,7 @@ function TutorialOverlay({ step, stepIndex, totalSteps, onNext, onSkip, onBack }
       <div className="tut-modal">
         <div className="tut-mascot">
           <div className={'tut-mascot-cat ' + (step.mascot || 'wave')}>
-            <Cat size={180} color={C.butter} accent="#c99e5c" expression="smile"/>
+            <Cat size={220} color={C.butter} accent="#c99e5c" expression="smile"/>
           </div>
           <div className="tut-mascot-glyph">
             {step.mascot === 'point' ? '👉' : step.mascot === 'cheer' ? '🎉' : '👋'}
