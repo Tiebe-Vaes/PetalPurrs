@@ -211,7 +211,7 @@ function PlantsScreen({ beds, selectedSeed, setSelectedSeed, inventory, harvestB
     <>
       <div className="stage-header">
         <div>
-          <h1>Plantjes 🌿</h1>
+          <h1>Plants 🌿</h1>
           <div className="sub">Drag a seed packet onto an empty bed to plant. Plants grow on their own — come back later to harvest.</div>
         </div>
       </div>
@@ -515,4 +515,67 @@ function ExtrasScreen({ draft, setDraft, activeOrder, onServe, tutLockTarget }) 
   );
 }
 
-Object.assign(window, { OrdersRail, CafeDiorama, PlantsScreen, CupsScreen, TeaScreen, ExtrasScreen });
+// ───────────────── Title / main menu screen
+function TitleScreen({ saves, onNewGame, onLoad, onDelete }) {
+  const [deleteConfirm, setDeleteConfirm] = React.useState(null);
+
+  return (
+    <div className="title-screen">
+      <div className="title-center">
+        <div className="title-hero">
+          <Cat size={150} color={C.butter} accent="#c99e5c" expression="smile"/>
+        </div>
+        <h1 className="title-logo">PetalPurrs</h1>
+        <div className="title-tagline">A cozy cat tea café ☕</div>
+
+        <button className="cta peach title-new-btn" onClick={onNewGame}>
+          <Ico name="sparkles" size={20}/> New Game
+        </button>
+
+        {saves.length > 0 && (
+          <div className="title-saves">
+            <div className="title-saves-label">Saved Games</div>
+            {saves.map(s => (
+              <div key={s.id} className="save-slot">
+                <div className="save-slot-icon">
+                  <Cat size={52} color={C.peach} accent={C.peachDeep} expression="smile"/>
+                </div>
+                <div className="save-slot-info">
+                  <div className="save-slot-level">Level {s.level}</div>
+                  <div className="save-slot-stats">${s.coins} · {s.xp} XP</div>
+                  <div className="save-slot-date">
+                    {new Date(s.savedAt).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                </div>
+                <div className="save-slot-btns">
+                  <button className="cta sage" style={{ fontSize: 13, padding: '8px 16px' }} onClick={() => onLoad(s)}>
+                    Continue
+                  </button>
+                  {deleteConfirm === s.id ? (
+                    <>
+                      <button className="cta" style={{ background: '#d97570', color: 'white', fontSize: 12, padding: '8px 12px' }}
+                        onClick={() => { onDelete(s.id); setDeleteConfirm(null); }}>
+                        Confirm
+                      </button>
+                      <button className="cta ghost" style={{ fontSize: 12, padding: '8px 12px' }}
+                        onClick={() => setDeleteConfirm(null)}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button className="cta ghost" style={{ fontSize: 12, padding: '8px 12px' }}
+                      onClick={() => setDeleteConfirm(s.id)}>
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { OrdersRail, CafeDiorama, PlantsScreen, CupsScreen, TeaScreen, ExtrasScreen, TitleScreen });

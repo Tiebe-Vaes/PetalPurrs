@@ -2,7 +2,13 @@
 
 const { useState, useEffect, useRef } = React;
 
-const PLANT_GROW_MS = 15000; // 15s full grow
+const PLANT_GROW_MS = 15000;
+
+const SAVE_KEY = 'petalpurrs-saves';
+function loadSavesFromStorage() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '[]'); } catch { return []; }
+}
+function writeSavesToStorage(arr) { localStorage.setItem(SAVE_KEY, JSON.stringify(arr)); }
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
@@ -44,22 +50,24 @@ function PetalPurrs() {
 
   // Tutorial — 10 steps
   const tutorialSteps = [
-    { title: 'Welcome to PetalPurrs!', body: "I'm Biscuit 🐾 — your cafe mentor. Let's brew your first tea together!", target: null, mascot: 'wave' },
-    { title: 'Read the order', body: 'Each cat shows you exactly what they want: a tea, a cup, an exact temperature, and sometimes extras like honey or lemon. Click the order on the left to take it.', target: 'order', mascot: 'point' },
-    { title: 'Step 1 — Pick a cup', body: 'Open the Cups tab. The cup the customer wants is highlighted — tap it.', target: 'tab-cups', mascot: 'point' },
-    { title: 'Pick THIS cup', body: 'This is the one they asked for. Tap it!', target: 'cup-target', mascot: 'point' },
-    { title: 'Step 2 — Pick a tea', body: "Open Tea. If you're out of a leaf, you'll need to grow it in the garden. For now we have plenty.", target: 'tab-tea', mascot: 'point' },
-    { title: 'Pick THIS tea', body: 'Tap the tea they want.', target: 'tea-target', mascot: 'point' },
-    { title: 'Step 3 — Set the exact temperature', body: 'Drag the slider until it matches the target marker (within 5° = perfect ✨).', target: 'temp', mascot: 'point' },
-    { title: 'Step 4 — Add the right extras', body: 'Open Extras. Tap each item the customer asked for — no more, no less.', target: 'tab-extras', mascot: 'point' },
-    { title: 'Add their extras', body: 'These tiles are highlighted. Add only what they asked for.', target: 'extras-target', mascot: 'point' },
-    { title: 'Step 5 — Serve!', body: '⭐⭐⭐ = perfect match → big payout. 1⭐ = unhappy customer → you LOSE XP. Hit Serve to finish.', target: 'serve', mascot: 'cheer' },
-    { title: 'Bonus: garden', body: 'Drag seed packets onto empty beds in the Plantjes tab. Plants grow on their own — just wait. You got this!', target: null, mascot: 'wave' },
+    { title: 'Welcome to PetalPurrs!', body: "I'm Biscuit 🐾 — brew perfect tea for each cat customer. Pick an order, choose a cup, select tea, set the temperature, add extras, then serve. Let's do one together!", target: null, mascot: 'wave' },
+    { title: 'Take an order!', body: 'Click an order card on the left to take it. Look carefully — the order shows the cup, tea, exact temperature, and any extras the cat wants. Then figure out which tabs you need!', target: 'order', mascot: 'point' },
+    { title: 'Pick the right cup', body: "The customer wants a specific cup — it's highlighted. Find it and tap it!", target: 'cup-target', mascot: 'point' },
+    { title: 'Choose the right tea', body: 'Select the tea leaf they asked for. Out of leaves? Grow some in the Plants tab first!', target: 'tea-target', mascot: 'point' },
+    { title: 'Hit the exact temperature!', body: 'Drag the slider until your temperature matches the target marker. Within 5° = perfect ✨ — nail it for the most stars!', target: 'temp', mascot: 'point' },
+    { title: 'Add their extras', body: 'Tap exactly what they asked for — no more, no less! Wrong extras = unhappy cat and lost XP.', target: 'extras-target', mascot: 'point' },
+    { title: 'Serve it up!', body: '⭐⭐⭐ = big payout! ⭐ = unhappy customer — you LOSE XP, and too many bad serves will drop your level! Hit Serve now.', target: 'serve', mascot: 'cheer' },
+    { title: 'Keep them happy!', body: "A bad serve drains your XP. Lose enough and your level drops — which locks some cup types. Higher levels unlock premium cups and more tea variety.", target: null, mascot: 'wave' },
+    { title: 'Grow your garden', body: 'In the Plants tab, drag seed packets onto empty beds. Plants grow all by themselves — come back and harvest when ready. More leaves = more orders you can fill! 🌿', target: null, mascot: 'wave' },
   ];
   const [tut, setTut] = useState({ open: true, step: 0 });
 
   const tutStep = tut.open ? tutorialSteps[tut.step] : null;
   const tutLockTarget = tutStep?.target;
+
+  const [screen, setScreen] = useState('title');
+  const [saves, setSaves] = useState(loadSavesFromStorage);
+  const [currentSaveId, setCurrentSaveId] = useState(null);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -226,60 +234,124 @@ function PetalPurrs() {
       return nx;
     });
 
-    if (tut.open && tut.step === 9) setTut(t => ({ ...t, step: 10 }));
+    if (tut.open && tut.step === 6) setTut(t => ({ ...t, step: 7 }));
     setTab('home');
   };
 
-  // Auto-advance tutorial when user follows the path
-  const goTab = (id) => {
-    if (tut.open) {
-      const stepTarget = tutorialSteps[tut.step]?.target;
-      if (stepTarget === 'tab-cups' && id === 'cups') setTut(t => ({ ...t, step: 3 }));
-      else if (stepTarget === 'tab-tea' && id === 'tea') setTut(t => ({ ...t, step: 5 }));
-      else if (stepTarget === 'tab-extras' && id === 'extras') setTut(t => ({ ...t, step: 7 }));
-    }
-    setTab(id);
-  };
+  const goTab = (id) => { setTab(id); };
 
   // Auto-advance when picking right cup/tea/extra
   useEffect(() => {
     if (!tut.open || !activeOrder) return;
     const s = tut.step;
-    if (s === 3 && draft.cup === activeOrder.cup) setTut(t => ({ ...t, step: 4 }));
-    if (s === 5 && draft.tea === activeOrder.tea) setTut(t => ({ ...t, step: 6 }));
-    if (s === 6 && Math.abs(draft.temp - activeOrder.tempExact) < 5) setTut(t => ({ ...t, step: 7 }));
-    if (s === 8) {
-      // all required extras present and no extras
+    if (s === 2 && draft.cup === activeOrder.cup) setTut(t => ({ ...t, step: 3 }));
+    if (s === 3 && draft.tea === activeOrder.tea) setTut(t => ({ ...t, step: 4 }));
+    if (s === 4 && Math.abs(draft.temp - activeOrder.tempExact) < 5) {
+      // skip extras step if order has none
+      setTut(t => ({ ...t, step: activeOrder.extras.length > 0 ? 5 : 6 }));
+    }
+    if (s === 5) {
       const wanted = activeOrder.extras;
       const got = draft.extras;
-      if (wanted.length === 0 || (wanted.every(e => got.includes(e)) && got.every(e => wanted.includes(e)))) {
-        setTut(t => ({ ...t, step: 9 }));
+      if (wanted.length > 0 && wanted.every(e => got.includes(e)) && got.every(e => wanted.includes(e))) {
+        setTut(t => ({ ...t, step: 6 }));
       }
     }
   }, [draft, tut, activeOrder]);
 
+  const INITIAL_BEDS = () => [
+    { id: 1, plant: 'green',     stage: 4, growth: 1,   planted: Date.now() - PLANT_GROW_MS },
+    { id: 2, plant: 'chamomile', stage: 3, growth: 0.6, planted: Date.now() - 9000 },
+    { id: 3, plant: null,        stage: 0, growth: 0,   planted: 0 },
+    { id: 4, plant: null,        stage: 0, growth: 0,   planted: 0 },
+    { id: 5, plant: 'lavender',  stage: 1, growth: 0.2, planted: Date.now() - 3000 },
+    { id: 6, plant: null,        stage: 0, growth: 0,   planted: 0 },
+  ];
+
+  const INITIAL_INVENTORY = { green: 5, chamomile: 3, rose: 2, lavender: 2, matcha: 0, hibiscus: 0 };
+
+  const startNewGame = () => {
+    setLevel(1); setXp(0); setCoins(50);
+    setInventory(INITIAL_INVENTORY);
+    setBeds(INITIAL_BEDS());
+    setOrders([0, 1, 2].map(i => makeOrder(i, 1)));
+    setActiveOrderId(null);
+    setDraft({ tea: null, cup: null, temp: 60, extras: [] });
+    setCustomers([
+      { id: uid(), name: 'Mochi',   color: CAT_COLORS[0], pos: 60, target: 60, speed: 24 },
+      { id: uid(), name: 'Juniper', color: CAT_COLORS[5], pos: 45, target: 45, speed: 28 },
+      { id: uid(), name: 'Saffron', color: CAT_COLORS[2], pos: 25, target: 25, speed: 30 },
+    ]);
+    setCurrentSaveId(null);
+    setTut({ open: true, step: 0 });
+    setTab('home');
+    setScreen('game');
+  };
+
+  const loadGame = (save) => {
+    setLevel(save.level); setXp(save.xp); setCoins(save.coins);
+    setInventory(save.inventory);
+    setBeds(save.beds);
+    setOrders([0, 1, 2].map(i => makeOrder(i, save.level)));
+    setActiveOrderId(null);
+    setDraft({ tea: null, cup: null, temp: 60, extras: [] });
+    setCurrentSaveId(save.id);
+    setTut({ open: false, step: 0 });
+    setTab('home');
+    setScreen('game');
+  };
+
+  const saveGame = () => {
+    const sid = currentSaveId || uid();
+    const entry = { id: sid, savedAt: Date.now(), level, xp, coins, inventory, beds };
+    setSaves(prev => {
+      const idx = prev.findIndex(s => s.id === sid);
+      let next = idx >= 0 ? prev.map((s, i) => i === idx ? entry : s) : [...prev, entry];
+      if (next.length > 3) next = next.slice(next.length - 3);
+      writeSavesToStorage(next);
+      return next;
+    });
+    setCurrentSaveId(sid);
+    showToast('Game saved!', '💾');
+    setSettingsOpen(false);
+  };
+
+  const deleteSave = (id) => {
+    setSaves(prev => {
+      const next = prev.filter(s => s.id !== id);
+      writeSavesToStorage(next);
+      return next;
+    });
+  };
+
+  const exitGame = () => { setScreen('title'); setSettingsOpen(false); };
+
   const tabs = [
     { id: 'home',   label: 'Home',     icon: 'home' },
-    { id: 'plants', label: 'Plantjes', icon: 'plant' },
+    { id: 'plants', label: 'Plants', icon: 'plant' },
     { id: 'cups',   label: 'Cups',     icon: 'cup' },
     { id: 'tea',    label: 'Tea',      icon: 'leaf' },
     { id: 'extras', label: 'Extras',   icon: 'sparkles' },
   ];
 
-  // Tutorial lock map: which tab is allowed
   const tabAllowed = (tabId) => {
     if (!tut.open) return true;
     const t = tutorialSteps[tut.step]?.target;
-    // allow current expected tab; otherwise lock all but home
-    if (t === 'tab-cups') return tabId === 'cups';
-    if (t === 'tab-tea') return tabId === 'tea';
-    if (t === 'tab-extras') return tabId === 'extras';
-    if (t === 'cup-target') return tabId === 'cups';
-    if (t === 'tea-target' || t === 'temp') return tabId === 'tea';
-    if (t === 'extras-target' || t === 'serve') return tabId === 'extras';
-    if (t === 'order') return tabId === 'home';
+    if (t === 'order') return tabId === 'home';       // must stay home to click order
+    if (t === 'serve') return tabId === 'extras';     // serve button lives on extras screen
     return true;
   };
+
+  if (screen === 'title') {
+    return (
+      <TitleScreen
+        saves={saves}
+        onNewGame={startNewGame}
+        onLoad={loadGame}
+        onDelete={deleteSave}
+      />
+    );
+  }
 
   return (
     <div className="app">
@@ -295,9 +367,11 @@ function PetalPurrs() {
         <div className="nav-tabs">
           {tabs.map(t => {
             const allowed = tabAllowed(t.id);
-            const isTutTab = (tutLockTarget === 'tab-cups' && t.id === 'cups')
-                          || (tutLockTarget === 'tab-tea' && t.id === 'tea')
-                          || (tutLockTarget === 'tab-extras' && t.id === 'extras');
+            const isTutTab = tut.open && (
+              (tutLockTarget === 'cup-target' && t.id === 'cups') ||
+              ((tutLockTarget === 'tea-target' || tutLockTarget === 'temp') && t.id === 'tea') ||
+              ((tutLockTarget === 'extras-target' || tutLockTarget === 'serve') && t.id === 'extras')
+            );
             return (
               <button
                 key={t.id}
@@ -402,8 +476,19 @@ function PetalPurrs() {
             <input type="range" min="0" max="100" value={settings.sound} onChange={e => setSettings(s => ({ ...s, sound: +e.target.value }))}/>
             <span className="pop-val">{settings.sound}</span>
           </div>
+          <div className="pop-row">
+            <label>Tutorial hints</label>
+            <button
+              className={'toggle' + (settings.tutorialHints ? ' on' : '')}
+              onClick={() => setSettings(s => ({ ...s, tutorialHints: !s.tutorialHints }))}
+            >
+              {settings.tutorialHints ? 'On' : 'Off'}
+            </button>
+          </div>
           <div className="pop-foot">
             <button className="pop-btn" onClick={() => { setTut({ open: true, step: 0 }); setSettingsOpen(false); }}>Restart tour</button>
+            <button className="pop-btn pop-btn-save" onClick={saveGame}>💾 Save game</button>
+            <button className="pop-btn pop-btn-exit" onClick={exitGame}>⬅ Exit</button>
           </div>
         </div>
       )}
@@ -480,7 +565,7 @@ function TutorialOverlay({ step, stepIndex, totalSteps, onNext, onSkip, onBack }
       <div className="tut-modal">
         <div className="tut-mascot">
           <div className={'tut-mascot-cat ' + (step.mascot || 'wave')}>
-            <Cat size={220} color={C.butter} accent="#c99e5c" expression="smile"/>
+            <Cat size={150} color={C.butter} accent="#c99e5c" expression="smile"/>
           </div>
           <div className="tut-mascot-glyph">
             {step.mascot === 'point' ? '👉' : step.mascot === 'cheer' ? '🎉' : '👋'}
@@ -497,10 +582,15 @@ function TutorialOverlay({ step, stepIndex, totalSteps, onNext, onSkip, onBack }
           <p className="tut-body">{step.body}</p>
           <div className="tut-actions">
             <button className="tut-btn ghost" onClick={onSkip}>Skip tour</button>
-            {stepIndex > 0 && <button className="tut-btn ghost" onClick={onBack}>← Back</button>}
-            <button className="tut-btn primary" onClick={onNext}>
-              {stepIndex < totalSteps - 1 ? 'Next →' : "Let's brew!"}
-            </button>
+            {stepIndex > 0 && !step.target && <button className="tut-btn ghost" onClick={onBack}>← Back</button>}
+            {!step.target && (
+              <button className="tut-btn primary" onClick={onNext}>
+                {stepIndex < totalSteps - 1 ? 'Next →' : "Let's brew! 🍵"}
+              </button>
+            )}
+            {step.target && (
+              <div className="tut-hint">Do the action above to continue →</div>
+            )}
           </div>
         </div>
       </div>
