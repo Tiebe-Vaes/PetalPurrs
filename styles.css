@@ -995,3 +995,14 @@ button:disabled { cursor: not-allowed; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(107,79,58,0.15); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(107,79,58,0.3); }
+
+.cta.warm {
+  background: #e6ccb2;
+  color: #5d4a44;
+}
+
+.cta.active-build {
+  background: #e67e22 !important; /* Standout orange when active */
+  color: white !important;
+  box-shadow: 0 4px 0 #b35f14;
+}

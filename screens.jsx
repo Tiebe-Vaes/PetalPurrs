@@ -1,5 +1,3 @@
-// Screens
-
 // ───────────────── Orders rail
 function OrdersRail({ orders, activeId, onSelect, tutLockTarget }) {
   const open = orders.filter(o => !o.done);
@@ -106,45 +104,63 @@ function OrderCard({ order, active, onClick, spotlight, locked }) {
 }
 
 // ───────────────── Cafe diorama (Home)
-function CafeDiorama({ customers, level, coins, orders, onGoto, activeOrder, draft }) {
+function CafeDiorama({ 
+  customers, level, coins, orders, onGoto, activeOrder, draft,
+  isBuildMode, setIsBuildMode, decorations, setDecorations 
+}) {
+  
+  const handleFloorClick = (e) => {
+    if (!isBuildMode) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    // Move the last decoration for simplicity in this version
+    setDecorations(prev => {
+      const next = [...prev];
+      next[0] = { ...next[0], x: Math.max(5, Math.min(95, x)) };
+      return next;
+    });
+  };
+
   return (
     <>
-      <div className="cafe-scene">
-        {/* sky / window backdrop */}
+      <div className={`cafe-scene ${isBuildMode ? 'build-active' : ''}`} onClick={handleFloorClick}>
         <div className="cafe-sky"/>
         <div className="cafe-floor"/>
-        {/* outside */}
+        
+        {/* Render Draggable Decorations */}
+        {decorations.map(dec => (
+          <div 
+            key={dec.id}
+            className={`cafe-decoration ${isBuildMode ? 'draggable' : ''}`}
+            style={{ left: dec.x + '%', bottom: '15%', zIndex: 4 }}
+          >
+            {dec.type === 'plant' && <TeaPlant stage={4} variant="rose" size={60}/>}
+            {dec.type === 'sign' && <div className="mini-sign" style={{fontSize: 24}}>🍵</div>}
+          </div>
+        ))}
+
         <div className="cafe-outside">
           <div className="outside-bush" style={{left: 30}}/>
           <div className="outside-bush" style={{left: 90, transform:'scale(0.7)'}}/>
         </div>
-        {/* door frame */}
         <div className="cafe-door">
           <div className="door-frame"/>
           <div className="door-sign">OPEN</div>
         </div>
-        {/* counter on the right */}
         <div className="cafe-counter">
           <div className="counter-top"/>
           <div className="counter-front"/>
-          {/* shelf */}
           <div className="counter-shelf">
             <div className="shelf-jar"><div className="jar-lid"/><div className="jar-body" style={{background:'#8fb96b'}}/></div>
             <div className="shelf-jar"><div className="jar-lid"/><div className="jar-body" style={{background:'#e8d38a'}}/></div>
-            <div className="shelf-jar"><div className="jar-lid"/><div className="jar-body" style={{background:'#c9a3d4'}}/></div>
-            <div className="shelf-jar"><div className="jar-lid"/><div className="jar-body" style={{background:'#e89b9b'}}/></div>
           </div>
-          {/* barista cat */}
           <div className="barista">
             <Cat size={86} color={C.peach} accent={C.peachDeep} expression="smile"/>
             <div className="barista-apron"/>
           </div>
-          {/* sign */}
           <div className="cafe-sign">PetalPurrs Café</div>
         </div>
-        {/* welcome rug */}
         <div className="cafe-rug"/>
-        {/* customers */}
         {customers.map((c, i) => (
           <div
             key={c.id}
@@ -152,34 +168,36 @@ function CafeDiorama({ customers, level, coins, orders, onGoto, activeOrder, dra
             style={{
               left: c.pos + '%',
               animationDuration: c.speed + 's',
-              zIndex: 5 + i,
+              zIndex: 10 + i,
             }}
           >
             <Cat size={72} color={c.color.body} accent={c.color.accent} expression="smile"/>
             <div className="customer-name">{c.name}</div>
           </div>
         ))}
-        {/* hanging plants */}
-        <div className="cafe-hang" style={{left: '30%'}}>
-          <div className="hang-string"/>
-          <TeaPlant stage={4} variant="green" size={50}/>
-        </div>
-        <div className="cafe-hang" style={{left: '55%'}}>
-          <div className="hang-string"/>
-          <TeaPlant stage={4} variant="lavender" size={50}/>
-        </div>
       </div>
 
       <div className="home-actions">
         <button className="cta peach" onClick={() => onGoto('plants')}><Ico name="plant" size={16}/> Tend garden</button>
+        
+        {/* Build Mode Toggle */}
+        <button 
+          className={`cta ${isBuildMode ? 'active-build' : 'warm'}`} 
+          onClick={() => setIsBuildMode(!isBuildMode)}
+        >
+          <Ico name={isBuildMode ? 'check' : 'settings'} size={16}/> 
+          {isBuildMode ? 'Save Layout' : 'Build Mode'}
+        </button>
+
         <button className="cta sage" onClick={() => onGoto('cups')}><Ico name="cup" size={16}/> Start brewing</button>
+        
         <div className="home-stats">
           <span><strong>{orders.filter(o => !o.done).length}</strong> waiting</span>
           <span><strong>{orders.filter(o => o.done).length}</strong> served</span>
         </div>
       </div>
 
-      {activeOrder && <CurrentBrewPanel activeOrder={activeOrder} draft={draft}/>}
+      {activeOrder && !isBuildMode && <CurrentBrewPanel activeOrder={activeOrder} draft={draft}/>}
     </>
   );
 }
@@ -195,7 +213,6 @@ function CurrentBrewPanel({ activeOrder, draft }) {
           <div className="brew-slot"><span className="brew-slot-label">Cup</span><span className={'brew-slot-val' + (cup ? '' : ' empty')}>{cup?.name || 'not chosen'}</span></div>
           <div className="brew-slot"><span className="brew-slot-label">Tea</span><span className={'brew-slot-val' + (tea ? '' : ' empty')}>{tea?.name || 'not chosen'}</span></div>
           <div className="brew-slot"><span className="brew-slot-label">Temp</span><span className="brew-slot-val">{draft.temp}°</span></div>
-          <div className="brew-slot"><span className="brew-slot-label">Extras</span><span className={'brew-slot-val' + (draft.extras.length ? '' : ' empty')}>{draft.extras.length ? draft.extras.join(', ') : 'none'}</span></div>
         </div>
         <div className="cup-display">
           {cup ? <Cup shape={cup.shape} color={cup.color} ring={cup.ring} size={140} filled={tea ? 0.7 : 0} fillColor={tea?.color}/> : <Cup shape="mug" color={C.cream} ring={'#c8b5a2'} size={140} filled={0}/>}
@@ -205,20 +222,17 @@ function CurrentBrewPanel({ activeOrder, draft }) {
   );
 }
 
-// ───────────────── Plants / Garden — auto-grow, drag-to-plant
+// ───────────────── Plants / Garden
 function PlantsScreen({ beds, selectedSeed, setSelectedSeed, inventory, harvestBed, plantSeed, draggingSeed, setDraggingSeed }) {
   return (
     <>
       <div className="stage-header">
         <div>
           <h1>Plantjes 🌿</h1>
-          <div className="sub">Drag a seed packet onto an empty bed to plant. Plants grow on their own — come back later to harvest.</div>
+          <div className="sub">Drag a seed packet onto an empty bed to plant.</div>
         </div>
       </div>
-
-      {/* Top inventory strip */}
       <div className="leaf-inventory">
-        <div className="leaf-inv-label">My leaves</div>
         {TEA_TYPES.map(t => (
           <div key={t.id} className="leaf-pill">
             <div className="leaf-pill-art" style={{ background: t.color + '33' }}>
@@ -231,7 +245,6 @@ function PlantsScreen({ beds, selectedSeed, setSelectedSeed, inventory, harvestB
           </div>
         ))}
       </div>
-
       <div className="garden">
         <div className="garden-beds">
           {beds.map(bed => (
@@ -249,7 +262,6 @@ function PlantsScreen({ beds, selectedSeed, setSelectedSeed, inventory, harvestB
           ))}
         </div>
         <div className="garden-side">
-          <div style={{ fontWeight: 700, fontSize: 14, color: C.cocoa, padding: '2px 4px' }}>Seed packets · drag to plant</div>
           {TEA_TYPES.filter(t => t.plant).map(t => (
             <SeedCard
               key={t.id}
@@ -275,56 +287,37 @@ function SeedCard({ tea, selected, dragging, onSelect, onDragStart, onDragEnd })
       onClick={onSelect}
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', tea.id);
-        e.dataTransfer.effectAllowed = 'copy';
         onDragStart();
       }}
       onDragEnd={onDragEnd}
     >
       <div className="seed-art"><TeaPlant stage={4} variant={tea.plant} size={40}/></div>
-      <div className="seed-info">
-        <div className="seed-name">{tea.name} seeds</div>
-        <div className="seed-meta">{tea.sub}</div>
-      </div>
-      <div className="seed-grip">⋮⋮</div>
+      <div className="seed-info"><div className="seed-name">{tea.name}</div></div>
     </div>
   );
 }
 
 function Bed({ bed, onHarvest, onPlant, onClick, draggingSeed }) {
   const ready = bed.plant && bed.growth >= 1;
-  const [dragOver, setDragOver] = React.useState(false);
-
-  if (!bed.plant) {
-    return (
-      <div
-        className={'bed empty' + (dragOver ? ' drag-over' : '') + (draggingSeed ? ' drop-hint' : '')}
-        onClick={onClick}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          const seedId = e.dataTransfer.getData('text/plain');
-          if (seedId) onPlant(bed, seedId);
-        }}
-      >
-        <div className="bed-empty-text">{dragOver ? '⬇ drop here' : '+ empty bed'}</div>
-      </div>
-    );
-  }
-  const tea = TEA_TYPES.find(t => t.id === bed.plant);
   return (
-    <div className={'bed' + (ready ? ' ready' : '')} onClick={() => ready ? onHarvest(bed) : null}>
-      {ready && <div className="bed-ready-badge">HARVEST!</div>}
-      {!ready && <div className="bed-growing">growing…</div>}
-      <div className="bed-plant">
-        <TeaPlant stage={bed.stage} variant={tea?.plant || bed.plant} size={100}/>
-      </div>
-      <div className="bed-footer">
-        <div className="bed-progress"><div style={{ width: (bed.growth * 100) + '%' }}/></div>
-        <div className="bed-pct">{Math.round(bed.growth * 100)}%</div>
-      </div>
-      <div className="bed-tag">{tea?.name}</div>
+    <div 
+      className={'bed' + (ready ? ' ready' : '') + (!bed.plant ? ' empty' : '')} 
+      onClick={onClick}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        const seedId = e.dataTransfer.getData('text/plain');
+        if (seedId) onPlant(bed, seedId);
+      }}
+    >
+      {bed.plant ? (
+        <>
+          <div className="bed-plant"><TeaPlant stage={bed.stage} variant={bed.plant} size={100}/></div>
+          <div className="bed-footer">
+            <div className="bed-progress"><div style={{ width: (bed.growth * 100) + '%' }}/></div>
+          </div>
+        </>
+      ) : <div className="bed-empty-text">+ plant</div>}
     </div>
   );
 }
@@ -334,27 +327,20 @@ function CupsScreen({ level, draft, setDraft, activeOrder, tutLockTarget }) {
   return (
     <>
       <div className="stage-header">
-        <div>
-          <h1>Choose a Cup</h1>
-          <div className="sub">{activeOrder ? `${activeOrder.catName} asked for a ${CUPS.find(c => c.id === activeOrder.cup)?.name}.` : 'Pick an order from the rail first.'}</div>
-        </div>
+        <h1>Choose a Cup</h1>
       </div>
       <div className="tile-grid cups-grid">
         {CUPS.map(c => {
           const locked = c.unlock > level;
           const selected = draft.cup === c.id;
-          const isTarget = activeOrder && activeOrder.cup === c.id;
-          const dimmed = tutLockTarget === 'cup-target' && !isTarget;
           return (
             <div
               key={c.id}
-              className={'cup-card' + (locked ? ' locked' : '') + (selected ? ' selected' : '') + (tutLockTarget === 'cup-target' && isTarget ? ' tut-spot' : '') + (dimmed ? ' tut-dim' : '')}
-              onClick={() => !locked && (!dimmed) && setDraft(d => ({ ...d, cup: c.id }))}
+              className={'cup-card' + (locked ? ' locked' : '') + (selected ? ' selected' : '')}
+              onClick={() => !locked && setDraft(d => ({ ...d, cup: c.id }))}
             >
-              {locked && <div className="cup-lock">Lv {c.unlock}</div>}
-              <div className="cup-art"><Cup shape={c.shape} color={c.color} ring={c.ring} size={96} filled={selected ? 0.5 : 0} fillColor="#c9986b"/></div>
+              <div className="cup-art"><Cup shape={c.shape} color={c.color} ring={c.ring} size={96}/></div>
               <div className="cup-name">{c.name}</div>
-              <div className="cup-meta">{locked ? 'Locked' : isTarget ? '★ what they want' : 'Tap to pick'}</div>
             </div>
           );
         })}
@@ -366,8 +352,6 @@ function CupsScreen({ level, draft, setDraft, activeOrder, tutLockTarget }) {
 // ───────────────── Tea + Temp
 function TeaScreen({ draft, setDraft, inventory, activeOrder, tutLockTarget }) {
   const trackRef = React.useRef(null);
-  const dragRef = React.useRef(false);
-
   const onTrackEvent = (e) => {
     const rect = trackRef.current.getBoundingClientRect();
     const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
@@ -375,77 +359,30 @@ function TeaScreen({ draft, setDraft, inventory, activeOrder, tutLockTarget }) {
     setDraft(d => ({ ...d, temp: Math.round(pct * 100) }));
   };
 
-  React.useEffect(() => {
-    const up = () => { dragRef.current = false; };
-    const move = (e) => { if (dragRef.current) onTrackEvent(e); };
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointermove', move);
-    return () => { window.removeEventListener('pointerup', up); window.removeEventListener('pointermove', move); };
-  }, []);
-
-  const targetTemp = activeOrder?.tempExact;
-  const tempDelta = targetTemp != null ? Math.abs(draft.temp - targetTemp) : null;
-
   return (
     <>
       <div className="stage-header">
-        <div>
-          <h1>Tea Type</h1>
-          <div className="sub">{activeOrder ? `${activeOrder.catName} wants ${TEA_TYPES.find(t => t.id === activeOrder.tea).name} at ${activeOrder.tempExact}°.` : 'Pick a leaf and set the temperature.'}</div>
-        </div>
+        <h1>Tea Type</h1>
       </div>
-
       <div className="tile-grid tea-grid">
         {TEA_TYPES.map(t => {
           const qty = inventory[t.id] || 0;
           const selected = draft.tea === t.id;
-          const isTarget = activeOrder && activeOrder.tea === t.id;
-          const dimmed = tutLockTarget === 'tea-target' && !isTarget;
-          const empty = qty <= 0;
           return (
             <div
               key={t.id}
-              className={'tea-card' + (selected ? ' selected' : '') + (empty ? ' tea-empty' : '') + (tutLockTarget === 'tea-target' && isTarget ? ' tut-spot' : '') + (dimmed ? ' tut-dim' : '')}
-              onClick={() => !empty && !dimmed && setDraft(d => ({ ...d, tea: t.id }))}
+              className={'tea-card' + (selected ? ' selected' : '') + (qty <= 0 ? ' tea-empty' : '')}
+              onClick={() => qty > 0 && setDraft(d => ({ ...d, tea: t.id }))}
             >
-              <div className="tea-row">
-                <div className="tea-art" style={{ background: t.color + '33' }}><TeaPlant stage={4} variant={t.plant} size={46}/></div>
-                <div style={{ flex: 1 }}>
-                  <div className="tea-name">{t.name}</div>
-                  <div className="tea-sub">{empty ? 'out of stock — grow some!' : t.sub}</div>
-                </div>
-                <div className="tea-qty" style={{ color: empty ? C.rose : C.cocoa }}>×{qty}</div>
-              </div>
-              <div className="tea-bar"><div style={{ width: Math.min(100, qty * 8) + '%', background: t.color }}/></div>
+              <div className="tea-name">{t.name} (×{qty})</div>
             </div>
           );
         })}
       </div>
-
-      <div className={'temp-panel' + (tutLockTarget === 'temp' ? ' tut-spot' : '')}>
-        <div className="temp-head">
-          <h4>Temperature</h4>
-          <div style={{ display:'flex', alignItems:'center', gap: 16 }}>
-            {targetTemp != null && (
-              <div className={'temp-target ' + (tempDelta < 5 ? 'perfect' : tempDelta < 15 ? 'close' : 'far')}>
-                target: {targetTemp}° {tempDelta < 5 ? '✨ perfect' : tempDelta < 15 ? 'close' : 'too ' + (draft.temp > targetTemp ? 'hot' : 'cold')}
-              </div>
-            )}
-            <div className="temp-val">{draft.temp}°</div>
-          </div>
-        </div>
-        <div
-          ref={trackRef}
-          className="temp-track"
-          onPointerDown={(e) => { dragRef.current = true; onTrackEvent(e); }}
-        >
-          {targetTemp != null && (
-            <div className="temp-target-marker" style={{ left: targetTemp + '%' }}/>
-          )}
+      <div className="temp-panel">
+        <div className="temp-head"><h4>Temperature: {draft.temp}°</h4></div>
+        <div ref={trackRef} className="temp-track" onPointerDown={onTrackEvent}>
           <div className="temp-thumb" style={{ left: draft.temp + '%' }}/>
-        </div>
-        <div className="temp-labels">
-          <span>❄ Iced</span><span>Cool</span><span>Warm</span><span>Hot</span><span>Steaming ♨</span>
         </div>
       </div>
     </>
@@ -457,60 +394,19 @@ function ExtrasScreen({ draft, setDraft, activeOrder, onServe, tutLockTarget }) 
   const toggle = (id) => {
     setDraft(d => ({ ...d, extras: d.extras.includes(id) ? d.extras.filter(x => x !== id) : [...d.extras, id] }));
   };
-  const wanted = activeOrder?.extras || [];
   return (
     <>
       <div className="stage-header">
-        <div>
-          <h1>Extras & Treats</h1>
-          <div className="sub">{activeOrder ? (wanted.length ? `${activeOrder.catName} wants: ${wanted.map(e => EXTRAS.find(x => x.id === e).name).join(', ')}.` : `${activeOrder.catName} doesn't want extras — keep it clean.`) : 'Sprinkle a little something special.'}</div>
-        </div>
-        <div className="right">
-          <button
-            className={'cta sage' + (tutLockTarget === 'serve' ? ' tut-spot' : '')}
-            disabled={!activeOrder || !draft.tea || !draft.cup}
-            onClick={onServe}
-          >
-            <Ico name="check" size={16}/> Serve order
-          </button>
-        </div>
+        <h1>Extras</h1>
+        <button className="cta sage" onClick={onServe}>Serve order</button>
       </div>
-
       <div className="tile-grid extras-grid">
-        {EXTRAS.map(e => {
-          const selected = draft.extras.includes(e.id);
-          const isTarget = wanted.includes(e.id);
-          const dimmed = tutLockTarget === 'extras-target' && !isTarget && wanted.length > 0;
-          return (
-            <div
-              key={e.id}
-              style={{ position:'relative' }}
-              className={'extra-card' + (selected ? ' selected' : '') + (tutLockTarget === 'extras-target' && isTarget ? ' tut-spot' : '') + (dimmed ? ' tut-dim' : '')}
-              onClick={() => !dimmed && toggle(e.id)}
-            >
-              {selected && <div className="check"><Ico name="check" size={12}/></div>}
-              {isTarget && !selected && <div className="want-tag">wants this</div>}
-              <div style={{ height: 72, display:'grid', placeItems:'center' }}><Extra kind={e.id} size={60}/></div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: C.cocoa }}>{e.name}</div>
-              <div style={{ fontSize: 11, color: C.cocoaSoft }}>+${e.price}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {activeOrder && (
-        <div className="receipt" style={{ marginTop: 22 }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: 22 }}>Order summary</h3>
-          <div className="receipt-item"><span className="receipt-label">Tea</span><span className="receipt-val">{draft.tea ? TEA_TYPES.find(t => t.id === draft.tea).name : '—'}</span></div>
-          <div className="receipt-item"><span className="receipt-label">Cup</span><span className="receipt-val">{draft.cup ? CUPS.find(c => c.id === draft.cup).name : '—'}</span></div>
-          <div className="receipt-item"><span className="receipt-label">Temperature</span><span className="receipt-val">{draft.temp}° (target {activeOrder.tempExact}°)</span></div>
-          <div className="receipt-item"><span className="receipt-label">Extras</span><span className="receipt-val">{draft.extras.join(', ') || 'none'}</span></div>
-          <div className="receipt-total">
-            <span className="receipt-label" style={{ alignSelf: 'flex-end' }}>Estimated payout</span>
-            <span className="tval">$5–15</span>
+        {EXTRAS.map(e => (
+          <div key={e.id} className={'extra-card' + (draft.extras.includes(e.id) ? ' selected' : '')} onClick={() => toggle(e.id)}>
+            <div className="extra-name">{e.name}</div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </>
   );
 }
