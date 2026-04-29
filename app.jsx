@@ -51,10 +51,13 @@ function PetalPurrs() {
   // Tutorial — 10 steps
   const tutorialSteps = [
     { title: 'Welcome to PetalPurrs!', body: "I'm Biscuit 🐾 — brew perfect tea for each cat customer. Pick an order, choose a cup, select tea, set the temperature, add extras, then serve. Let's do one together!", target: null, mascot: 'wave' },
-    { title: 'Take an order!', body: 'Click an order card on the left to take it. Look carefully — the order shows the cup, tea, exact temperature, and any extras the cat wants. Then figure out which tabs you need!', target: 'order', mascot: 'point' },
-    { title: 'Pick the right cup', body: "The customer wants a specific cup — it's highlighted. Find it and tap it!", target: 'cup-target', mascot: 'point' },
+    { title: 'Take an order!', body: 'Click an order card on the left to take it. Look carefully — the order shows the cup, tea, exact temperature, and any extras the cat wants.', target: 'order', mascot: 'point' },
+    { title: 'Head to the Cups tab', body: "Good! Now tap the Cups tab in the top navigation bar — that's where you choose the cup for your customer.", target: 'tab-cups', mascot: 'point' },
+    { title: 'Pick the right cup', body: "The customer wants a specific cup — it's highlighted in green. Tap it!", target: 'cup-target', mascot: 'point' },
+    { title: 'Head to the Tea tab', body: 'Nice pick! Now tap the Tea tab in the navigation to choose the right tea leaves.', target: 'tab-tea', mascot: 'point' },
     { title: 'Choose the right tea', body: 'Select the tea leaf they asked for. Out of leaves? Grow some in the Plants tab first!', target: 'tea-target', mascot: 'point' },
-    { title: 'Hit the exact temperature!', body: 'Drag the slider until your temperature matches the target marker. Within 5° = perfect ✨ — nail it for the most stars!', target: 'temp', mascot: 'point' },
+    { title: 'Hit the exact temperature!', body: 'Drag the slider until your temperature matches the target marker. Within 5° = perfect ✨', target: 'temp', mascot: 'point' },
+    { title: 'Head to the Extras tab', body: "Almost done! Tap the Extras tab — you'll add any finishing touches and serve from there.", target: 'tab-extras', mascot: 'point' },
     { title: 'Add their extras', body: 'Tap exactly what they asked for — no more, no less! Wrong extras = unhappy cat and lost XP.', target: 'extras-target', mascot: 'point' },
     { title: 'Serve it up!', body: '⭐⭐⭐ = big payout! ⭐ = unhappy customer — you LOSE XP, and too many bad serves will drop your level! Hit Serve now.', target: 'serve', mascot: 'cheer' },
     { title: 'Keep them happy!', body: "A bad serve drains your XP. Lose enough and your level drops — which locks some cup types. Higher levels unlock premium cups and more tea variety.", target: null, mascot: 'wave' },
@@ -234,27 +237,33 @@ function PetalPurrs() {
       return nx;
     });
 
-    if (tut.open && tut.step === 6) setTut(t => ({ ...t, step: 7 }));
+    if (tut.open && tut.step === 9) setTut(t => ({ ...t, step: 10 }));
     setTab('home');
   };
 
-  const goTab = (id) => { setTab(id); };
+  const goTab = (id) => {
+    setTab(id);
+    if (tut.open) {
+      if (tut.step === 2 && id === 'cups') setTut(t => ({ ...t, step: 3 }));
+      if (tut.step === 4 && id === 'tea') setTut(t => ({ ...t, step: 5 }));
+      if (tut.step === 7 && id === 'extras') setTut(t => ({ ...t, step: activeOrder?.extras.length > 0 ? 8 : 9 }));
+    }
+  };
 
   // Auto-advance when picking right cup/tea/extra
   useEffect(() => {
     if (!tut.open || !activeOrder) return;
     const s = tut.step;
-    if (s === 2 && draft.cup === activeOrder.cup) setTut(t => ({ ...t, step: 3 }));
-    if (s === 3 && draft.tea === activeOrder.tea) setTut(t => ({ ...t, step: 4 }));
-    if (s === 4 && Math.abs(draft.temp - activeOrder.tempExact) < 5) {
-      // skip extras step if order has none
-      setTut(t => ({ ...t, step: activeOrder.extras.length > 0 ? 5 : 6 }));
+    if (s === 3 && draft.cup === activeOrder.cup) setTut(t => ({ ...t, step: 4 }));
+    if (s === 5 && draft.tea === activeOrder.tea) setTut(t => ({ ...t, step: 6 }));
+    if (s === 6 && Math.abs(draft.temp - activeOrder.tempExact) < 5) {
+      setTut(t => ({ ...t, step: 7 }));
     }
-    if (s === 5) {
+    if (s === 8) {
       const wanted = activeOrder.extras;
       const got = draft.extras;
       if (wanted.length > 0 && wanted.every(e => got.includes(e)) && got.every(e => wanted.includes(e))) {
-        setTut(t => ({ ...t, step: 6 }));
+        setTut(t => ({ ...t, step: 9 }));
       }
     }
   }, [draft, tut, activeOrder]);
@@ -337,8 +346,11 @@ function PetalPurrs() {
   const tabAllowed = (tabId) => {
     if (!tut.open) return true;
     const t = tutorialSteps[tut.step]?.target;
-    if (t === 'order') return tabId === 'home';       // must stay home to click order
-    if (t === 'serve') return tabId === 'extras';     // serve button lives on extras screen
+    if (t === 'order') return tabId === 'home';
+    if (t === 'tab-cups') return tabId === 'cups';
+    if (t === 'tab-tea') return tabId === 'tea';
+    if (t === 'tab-extras') return tabId === 'extras';
+    if (t === 'serve') return tabId === 'extras';
     return true;
   };
 
@@ -368,9 +380,9 @@ function PetalPurrs() {
           {tabs.map(t => {
             const allowed = tabAllowed(t.id);
             const isTutTab = tut.open && (
-              (tutLockTarget === 'cup-target' && t.id === 'cups') ||
-              ((tutLockTarget === 'tea-target' || tutLockTarget === 'temp') && t.id === 'tea') ||
-              ((tutLockTarget === 'extras-target' || tutLockTarget === 'serve') && t.id === 'extras')
+              ((tutLockTarget === 'tab-cups' || tutLockTarget === 'cup-target') && t.id === 'cups') ||
+              ((tutLockTarget === 'tab-tea' || tutLockTarget === 'tea-target' || tutLockTarget === 'temp') && t.id === 'tea') ||
+              ((tutLockTarget === 'tab-extras' || tutLockTarget === 'extras-target' || tutLockTarget === 'serve') && t.id === 'extras')
             );
             return (
               <button
@@ -464,6 +476,34 @@ function PetalPurrs() {
         </div>
       )}
 
+      {/* Notifications popover */}
+      {notifOpen && !tut.open && (
+        <div className="popover" onClick={(e) => e.stopPropagation()}>
+          <div className="pop-head">
+            <h3>Orders</h3>
+            <button className="pop-close" onClick={() => setNotifOpen(false)}>×</button>
+          </div>
+          {orders.filter(o => !o.done).length === 0 ? (
+            <div style={{ padding: '12px 16px', color: '#888', fontSize: 13 }}>No pending orders right now.</div>
+          ) : orders.filter(o => !o.done).map(o => {
+            const teaLabel = TEA_TYPES.find(t => t.id === o.tea)?.name ?? o.tea;
+            const cupLabel = CUPS.find(c => c.id === o.cup)?.name ?? o.cup;
+            const isActive = o.id === activeOrderId;
+            return (
+              <div
+                key={o.id}
+                className="pop-row"
+                style={{ cursor: 'pointer', background: isActive ? 'rgba(180,220,180,0.18)' : undefined, flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}
+                onClick={() => { selectOrder(o.id); setNotifOpen(false); setTab('home'); }}
+              >
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{o.catName} {isActive ? '✏️' : ''}</div>
+                <div style={{ fontSize: 12, color: '#888' }}>{teaLabel} · {cupLabel} · {o.temp}{o.extras.length > 0 ? ` · ${o.extras.length} extra${o.extras.length > 1 ? 's' : ''}` : ''}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Settings popover */}
       {settingsOpen && !tut.open && (
         <div className="popover" onClick={(e) => e.stopPropagation()}>
@@ -511,8 +551,21 @@ function TutorialOverlay({ step, stepIndex, totalSteps, onNext, onSkip, onBack }
       else if (step.target === 'cup-target') el = document.querySelector('.cup-card.tut-spot');
       else if (step.target === 'tea-target') el = document.querySelector('.tea-card.tut-spot');
       else if (step.target === 'temp') el = document.querySelector('.temp-panel');
-      else if (step.target === 'extras-target') el = document.querySelector('.extra-card.tut-spot');
       else if (step.target === 'serve') el = document.querySelector('.cta.sage');
+      if (step.target === 'extras-target') {
+        const els = [...document.querySelectorAll('.extra-card.tut-spot')];
+        if (els.length > 0) {
+          const rects = els.map(e => e.getBoundingClientRect());
+          const x = Math.min(...rects.map(r => r.left));
+          const y = Math.min(...rects.map(r => r.top));
+          const right = Math.max(...rects.map(r => r.right));
+          const bottom = Math.max(...rects.map(r => r.bottom));
+          setSpotlight({ x, y, w: right - x, h: bottom - y });
+        } else {
+          setSpotlight(null);
+        }
+        return;
+      }
       if (el) {
         const r = el.getBoundingClientRect();
         setSpotlight({ x: r.left, y: r.top, w: r.width, h: r.height });
