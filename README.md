@@ -1,6 +1,13 @@
 # PetalPurrs
 
-A cozy tea-shop game where you serve orders to cat customers. Read each cat's request, brew the right tea with the right cup, temperature, and extras, then serve it to earn coins and tips. Level up to unlock new cups and rarer tea types.
+A cozy tea-shop game where you serve orders to cat customers. Read each cat's request, brew the right tea with the right cup, temperature, and extras, then serve it to earn coins and tips. Level up to unlock new cups and rarer tea types. Don't forget to manage your garden to keep your stock of tea leaves full!
+
+## Technologies Used
+
+- **HTML5:** Core structure of the application.
+- **CSS3:** Custom styling for the cozy interface and smooth animations.
+- **React (18.3):** Handles state management, UI components, and game logic (loaded directly via CDN).
+- **Babel (Standalone):** Compiles JSX syntax directly in the browser, running the game without needing a build step.
 
 ## How to play
 
